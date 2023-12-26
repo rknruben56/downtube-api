@@ -3,8 +3,8 @@ const app = express()
 const port = 3000
 
 const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
-const client = new SNSClient({ region: process.env.AWS_REGION | "us-east-2" });
-const {downloadTopic} = JSON.parse(process.env.COPILOT_SNS_TOPIC_ARNS);
+const client = new SNSClient({ region: "us-east-2" });
+const { downloadTopic } = JSON.parse(process.env.COPILOT_SNS_TOPIC_ARNS);
 
 app.use(express.json())
 
@@ -13,12 +13,14 @@ app.get('/', (_req, res) => {
 })
 
 app.post('/download', async (req, res) => {
-  const videoId = req.body.video
+  const video = req.body.video
+  console.log(`request recieved: ${video}`)
   await client.send(new PublishCommand({
-    Message: videoId,
+    Message: video,
     TopicArn: downloadTopic,
-  }));
-  res.status(201)
+  }))
+  console.log('download event emitted')
+  res.status(201).end()
 })
 
 app.listen(port, () => {
