@@ -1,12 +1,17 @@
-const express = require('express')
+import express, { json } from "express"
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"
+
+const region = "us-east-2"
+
+// Server
 const app = express()
-const port = 3000
+const port = 80
 
-const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
-const client = new SNSClient({ region: "us-east-2" });
-const { downloadTopic } = JSON.parse(process.env.COPILOT_SNS_TOPIC_ARNS);
+// Messaging
+const snsClient = new SNSClient({ region: region })
+const { downloadTopic } = JSON.parse(process.env.COPILOT_SNS_TOPIC_ARNS)
 
-app.use(express.json())
+app.use(json())
 
 app.get('/', (_req, res) => {
   res.send('Downtube API is running!')
@@ -14,8 +19,8 @@ app.get('/', (_req, res) => {
 
 app.post('/download', async (req, res) => {
   const video = req.body.video
-  console.log(`request recieved: ${video}`)
-  await client.send(new PublishCommand({
+  console.log(`request received: ${video}`)
+  await snsClient.send(new PublishCommand({
     Message: video,
     TopicArn: downloadTopic,
   }))
@@ -23,6 +28,11 @@ app.post('/download', async (req, res) => {
   res.status(201).end()
 })
 
-app.listen(port, () => {
+app.post('/complete', async (req, res) => {
+  console.log(`audio received: ${req.body.title}`)
+  res.status(200).end()
+})
+
+app.listen(port, async () => {
   console.log(`downtube-api listening on port ${port}`)
 })
