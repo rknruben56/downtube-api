@@ -1,11 +1,19 @@
 import express, { json } from "express"
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"
+import { Server } from "socket.io"
+import { createServer } from "node:http"
+
 
 const region = "us-east-2"
+const port = 80
 
 // Server
 const app = express()
-const port = 80
+const server = createServer(app)
+
+// Socket
+const io = new Server(server)
+var clientMap = {}
 
 // Messaging
 const snsClient = new SNSClient({ region: region })
@@ -30,9 +38,23 @@ app.post('/download', async (req, res) => {
 
 app.post('/complete', async (req, res) => {
   console.log(`audio received: ${req.body.title}`)
+  const socket = clientMap[req.body.videoID]
+  if (socket != null) {
+    socket.emit("download complete", req.body.url)
+  }
   res.status(200).end()
 })
 
-app.listen(port, async () => {
+io.on('connection', (socket) => {
+  socket.on('download video', (msg) => {
+    const url = new URL(msg)
+    const searchParam = new URLSearchParams(url.search)
+    const videoID = searchParam.get("v")
+    clientMap[videoID] = socket
+    console.log(videoID)
+  })
+})
+
+server.listen(port, async () => {
   console.log(`downtube-api listening on port ${port}`)
 })
