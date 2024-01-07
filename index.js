@@ -33,7 +33,7 @@ app.post('/download', async (req, res) => {
     TopicArn: downloadTopic,
   }))
   console.log('download event emitted')
-  res.status(201).end()
+  res.status(201).set('Access-Control-Allow-Origin', '*').end()
 })
 
 app.post('/complete', async (req, res) => {
