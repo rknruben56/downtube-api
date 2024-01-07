@@ -2,6 +2,7 @@ import express, { json } from "express"
 import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"
 import { Server } from "socket.io"
 import { createServer } from "node:http"
+import cors from "cors"
 
 
 const region = "us-east-2"
@@ -20,6 +21,7 @@ const snsClient = new SNSClient({ region: region })
 const { downloadTopic } = JSON.parse(process.env.COPILOT_SNS_TOPIC_ARNS)
 
 app.use(json())
+app.use(cors())
 
 app.get('/', (_req, res) => {
   res.send('Downtube API is running!')
@@ -33,7 +35,7 @@ app.post('/download', async (req, res) => {
     TopicArn: downloadTopic,
   }))
   console.log('download event emitted')
-  res.status(201).set('Access-Control-Allow-Origin', '*').end()
+  res.status(201).end()
 })
 
 app.post('/complete', async (req, res) => {
